@@ -1,59 +1,38 @@
-version: "3.9"
+version: "3.8"
 
 services:
   traefik:
-    image: traefik:v3.4
-
-    networks:
-      - traefik_proxy
-
+    image: traefik:v3.1
+    command:
+      - "--providers.swarm=true"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.network=traefik_proxy"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"          # Панель Traefik без пароля, только локально!
     ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
-
+      - "80:80"
+      - "8080:8080"                    # Панель Traefik
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-
-    command:
-      - "--entrypoints.web.address=:80"
-      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
-      - "--providers.swarm.watch=true"
-      - "--providers.swarm.exposedbydefault=false"
-      - "--providers.swarm.network=traefik_proxy"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
-      - "--log.level=DEBUG"
-      - "--log.level=INFO"
-      - "--accesslog=true"
-      - "--metrics.prometheus=true"
-
+    networks:
+      - traefik_proxy
     deploy:
-      mode: replicated
-      replicas: 1
       placement:
         constraints:
-          - node.role == manager
-
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.swarm.localhost`)"
-        - "traefik.http.routers.dashboard.entrypoints=web"
-        - "traefik.http.routers.dashboard.service=api@internal"
+          - node.role==manager
 
   userapi:
-    image: localhost:5000/userapi:latest
+    image: userapi:latest
     networks:
       - traefik_proxy
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.userapi.rule=Host(`userapi.localhost`)"
+        - "traefik.http.routers.userapi.rule=Host(`userapi.swarm.localhost`)"
         - "traefik.http.routers.userapi.entrypoints=web"
-        - "traefik.http.routers.userapi.service=userapi"
         - "traefik.http.services.userapi.loadbalancer.server.port=8000"
 
 networks:
   traefik_proxy:
-    external: true
+    driver: overlay
+    attachable: true
