@@ -24,6 +24,7 @@ services:
       - "--providers.swarm.network=traefik_proxy"
       - "--api.dashboard=true"
       - "--api.insecure=true"
+      - "--log.level=DEBUG"
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--metrics.prometheus=true"
@@ -50,6 +51,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.userapi.rule=Host(`userapi.localhost`)"
         - "traefik.http.routers.userapi.entrypoints=web"
+        - "traefik.http.routers.userapi.service=userapi"
         - "traefik.http.services.userapi.loadbalancer.server.port=8000"
 
 networks:
