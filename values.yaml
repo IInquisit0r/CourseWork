@@ -1,0 +1,51 @@
+ports:
+  # Defines the HTTP entry point named 'web'
+  web:
+    port: 80
+
+# Enables the dashboard
+api:
+  dashboard: true
+  # Включаем небезопасный доступ к панели управления для локальной разработки
+  insecure: true
+
+# Настройка маршрута для панели управления через HTTP
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`dashboard.docker.localhost`)
+    entryPoints:
+      - web
+
+# We will route with Gateway API instead.
+ingressClass:
+  enabled: false
+# Enable Gateway API Provider & Disables the KubernetesIngress provider
+# Providers tell Traefik where to find routing configuration.
+providers:
+  kubernetesIngress:
+     enabled: false
+  kubernetesGateway:
+     enabled: true # <-- Оставляем, если планируете использовать Gateway API для маршрутов
+     # Или включите kubernetesIngress: enabled: true и отключите kubernetesGateway: enabled: false
+     # если вы будете использовать стандартные Ingress ресурсы.
+
+## Gateway Listeners
+gateway:
+  listeners:
+    web:
+      port: 80
+      protocol: HTTP
+      namespacePolicy:
+        from: All
+
+# Enable Observability
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+# Enables Prometheus for Metrics
+metrics:
+  prometheus:
+    enabled: true

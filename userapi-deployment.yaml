@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userapi
+  namespace: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: userapi
+  template:
+    metadata:
+      labels:
+        app: userapi
+    spec:
+      containers:
+        - name: userapi
+          image: userapi:latest # Имя вашего образа
+          ports:
+            - containerPort: 8000 # Порт, на котором слушает ваш FastAPI приложение
