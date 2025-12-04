@@ -15,6 +15,27 @@ spec:
     spec:
       containers:
         - name: userapi
-          image: userapi:latest # Имя вашего образа
+          image: userapi:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000 # Порт, на котором слушает ваш FastAPI приложение
+          env:
+            - name: DB_HOST
+              value: "postgres-service" # Имя Service в том же namespace (traefik)
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret # Secret в namespace traefik
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
