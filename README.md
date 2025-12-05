@@ -59,56 +59,62 @@
       --values values.yaml
     ```
 
-### 3. Запуск `userapi`
+### 3. Развёртывание `PostgreSQL`
 
-1.  **Перейдите в директорию `app`:**
+1.  **Создайте PersistentVolumeClaim:**
     ```bash
-    cd /mnt/c/Users/Inquisitor/Desktop/CourseWork/Project/app
+    kubectl apply -f postgres-pvc.yaml
     ```
 
-2.  **Соберите Docker-образ `userapi`:**
-    ```bash
-    docker build -t userapi:latest .
-    ```
-
-3.  **Импортируйте образ в кластер k3d:**
-    ```bash
-    # Вернитесь в директорию Project
-    cd ..
-    k3d image import userapi:latest --cluster traefik
-    ```
-
-### 4. Запуск PostgreSQL
-
-1.  **Создайте Secret для PostgreSQL:**
+2.  **Создайте Secret для PostgreSQL:**
     ```bash
     kubectl create secret generic postgres-secret \
       --from-literal=POSTGRES_PASSWORD=your_secure_password \
       --from-literal=POSTGRES_USER=your_db_user \
       --from-literal=POSTGRES_DB=your_db_name \
       -n traefik
+
+    ```
+
+3.  **Примените Deployment и Service для PostgreSQL:**
+    ```bash
+    kubectl apply -f postgres-deployment.yaml
+    kubectl apply -f postgres-service.yaml
+    ```
+
+4. **Проверьте, что под с PostgreSQL запущен:**
+    ```bash
+    kubectl get pods -n traefik
+    ```
+### 4. Запуск userapi
+
+1.  **Перейдите в директорию app:**
+    ```bash
+    cd /mnt/c/Users/Inquisitor/Desktop/CourseWork/Project/app
     ```
     *Замените `your_secure_password`, `your_db_user`, `your_db_name` на реальные значения.*
 
+2. **Соберите Docker-образ userapi:**
+    ```bash
+    docker build -t userapi:latest .
+    ```
 
-### 5. Запуск `userapi`
+3. **Импортируйте образ в кластер k3d:**
+    ```bash
+    cd ..
+    k3d image import userapi:latest --cluster traefik
 
-1.  **Примените:**
+    ```
+4. **Примените Deployment, Service и HTTPRoute для userapi:**
     ```bash
     kubectl apply -f userapi-deployment.yaml
-    ```
-
-2.  **Примените:**
-    ```bash
     kubectl apply -f userapi-service.yaml
-    ```
-
-3.  **Примените:**
-    ```bash
     kubectl apply -f userapi-httproute.yaml
     ```
 
-### 6. Установка Prometheus и Grafana
+5. **Если userapi упал (CrashLoopBackOff), убедитесь, что PostgreSQL работает и Secret корректен, пересоберите образ и импортируйте заново.**
+
+### 5. Установка Prometheus и Grafana
 
 1.  **Создайте namespace `monitoring`:**
     ```bash
