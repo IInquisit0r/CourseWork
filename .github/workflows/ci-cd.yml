@@ -59,19 +59,19 @@ jobs:
       - name: Run basic DB check
         run: |
           python - <<EOF
-import os
-from sqlalchemy import create_engine, text
-
-db_user = os.getenv("DB_USER") or "testuser"
-db_password = os.getenv("DB_PASSWORD") or "testpassword"
-db_name = os.getenv("DB_NAME") or "testdb"
-
-url = f"postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
-engine = create_engine(url)
-
-with engine.connect() as conn:
-    print("DB OK:", conn.execute(text("SELECT 1")).scalar())
-EOF
+          import os
+          from sqlalchemy import create_engine, text
+          
+          db_user = os.getenv("DB_USER") or "testuser"
+          db_password = os.getenv("DB_PASSWORD") or "testpassword"
+          db_name = os.getenv("DB_NAME") or "testdb"
+          
+          url = f"postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
+          engine = create_engine(url)
+          
+          with engine.connect() as conn:
+              print("DB OK:", conn.execute(text("SELECT 1")).scalar())
+          EOF
 
       - name: Build Docker image
         run: docker build --platform linux/amd64 -t iinquisit0r/userapi:latest app/.
