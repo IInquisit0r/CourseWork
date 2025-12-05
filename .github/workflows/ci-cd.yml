@@ -81,24 +81,3 @@ jobs:
 
     - name: Push Docker image
       run: docker push iinquisit0r/userapi:latest
-
-
-  deploy-to-k3d:
-    runs-on: self-hosted
-    needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Import image to k3d
-        run: |
-          docker pull iinquisit0r/userapi:latest
-          docker save iinquisit0r/userapi:latest -o image.tar
-          k3d image import -c traefik image.tar
-
-      - name: Update Kubernetes deployment
-        run: |
-          kubectl set image deployment/userapi -n traefik userapi=iinquisit0r/userapi:latest
-          kubectl rollout status deployment/userapi -n traefik
