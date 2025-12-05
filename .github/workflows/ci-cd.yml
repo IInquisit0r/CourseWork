@@ -19,16 +19,16 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: $TEST_DB_USER
-          POSTGRES_PASSWORD: $TEST_DB_PASSWORD
-          POSTGRES_DB: $TEST_DB_NAME
+          POSTGRES_USER: "${TEST_DB_USER}"
+          POSTGRES_PASSWORD: "${TEST_DB_PASSWORD}"
+          POSTGRES_DB: "${TEST_DB_NAME}"
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U $TEST_DB_USER"
+          --health-cmd="pg_isready -U ${TEST_DB_USER}"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
     steps:
       - name: Checkout repo
@@ -69,8 +69,7 @@ jobs:
           EOF
 
       - name: Build Docker image
-        run: |
-          docker build -t iinquisit0r/userapi:latest app/.
+        run: docker build -t iinquisit0r/userapi:latest app/.
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
