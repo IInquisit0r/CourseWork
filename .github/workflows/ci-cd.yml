@@ -1,3 +1,4 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline for k3d
 
 on:
@@ -24,6 +25,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -40,7 +42,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t iinquisit0r/userapi:latest app/. # Собираем из папки app
+        docker build -t iinquisit0r/userapi:latest app/.
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
@@ -52,13 +54,19 @@ jobs:
       run: |
         docker push iinquisit0r/userapi:latest
 
-    # Условие: выполняем деплой только при push в main
-    - name: Deploy to k3d (if push to main)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      runs-on: self-hosted
-      run: |
-        k3d image import iinquisit0r/userapi:latest --cluster traefik
-        kubectl set image deployment/userapi -n traefik userapi=iinquisit0r/userapi:latest
-        kubectl rollout status deployment/userapi -n traefik
-      env:
-        KUBECONFIG: /home/your_user/.kube/config
+  deploy-to-k3d:
+    runs-on: self-hosted
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repo (может понадобиться для доступа к другим файлам, если деплой сложнее)
+        uses: actions/checkout@v4
+
+      - name: Import image to k3d and update deployment
+        run: |
+          # 1. Импортируем образ в k3d
+          k3d image import iinquisit0r/userapi:latest --cluster traefik
+          # 2. Обновляем Deployment в Kubernetes
+          kubectl set image deployment/userapi -n traefik userapi=iinquisit0r/userapi:latest
+          # 3. Ждём готовности новых подов
+          kubectl rollout status deployment/userapi -n traefik
