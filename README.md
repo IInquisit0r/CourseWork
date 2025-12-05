@@ -168,15 +168,8 @@
 
 1.  **GitHub Actions Runner (локальный):** Для выполнения шага деплоя в локальный кластер k3d необходимо установить **локальный GitHub Actions Runner** на вашем Windows-ноутбуке (или WSL2). Это специальный агент, который позволяет GitHub Actions выполнять задачи непосредственно на вашей машине, имея доступ к Docker, k3d и kubectl.
 2.  **Настройка Secrets:** В настройках репозитория GitHub (`Settings` -> `Secrets and variables` -> `Actions`) добавьте следующие секреты:
-    *   `DOCKER_USERNAME`: ваше имя пользователя Docker Hub.
-    *   `DOCKER_PASSWORD`: ваш токен доступа к Docker Hub.
+    *   `DOCKER_USERNAME`: 1nquisit0r
+    *   `DOCKER_PASSWORD`: dckr_pat_icBPIXwCsdNl_pWUAgoc985p9bI
     *   `TEST_DB_USER`: тестовое имя пользователя для PostgreSQL (например, `test_user`).
     *   `TEST_DB_PASSWORD`: тестовый пароль для PostgreSQL (например, `test_password`).
     *   `TEST_DB_NAME`: тестовое имя базы данных (например, `test_db`).
-
-### Инструкция по настройке локального раннера
-
-1.  Перейдите в настройки вашего репозитория на GitHub -> `Settings` -> `Actions` -> `Runners`.
-2.  Нажмите `New self-hosted runner`.
-3.  Выберите ОС (Linux, если WSL2; Windows, если раннер на хосте). Следуйте инструкциям по скачиванию, настройке и запуску раннера.
-4.  Убедитесь, что `kubectl` и `k3d` установлены и работают в среде, где будет работать раннер (WSL2 или Windows).
