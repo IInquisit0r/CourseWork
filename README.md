@@ -158,8 +158,7 @@
     ```
 *   Откройте `http://localhost:3000` в браузере.
 *   Логин: `admin`
-*   Пароль: `prom-operator` 
-* (или получите из Secret: `kubectl get secret --namespace monitoring prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode`)
+*   Пароль: получите из Secret: `kubectl get secret --namespace monitoring prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode`)
 
 ## CI/CD Pipeline
 
