@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Секреты с fallback
       TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
       TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
       TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
@@ -19,13 +20,13 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_USER: ${{ secrets.TEST_DB_USER || 'testuser' }}
-          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD || 'testpassword' }}
-          POSTGRES_DB: ${{ secrets.TEST_DB_NAME || 'testdb' }}
+          POSTGRES_USER: ${{ env.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.TEST_DB_NAME }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.TEST_DB_USER || 'testuser' }}"
+          --health-cmd="pg_isready -U ${{ env.TEST_DB_USER }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -44,10 +45,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r app/requirements.txt
 
+      - name: Set DB env with fallback
+        run: |
+          echo "DB_USER=${{ secrets.TEST_DB_USER || 'testuser' }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD || 'testpassword' }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ secrets.TEST_DB_NAME || 'testdb' }}" >> $GITHUB_ENV
+
       - name: Wait for Postgres
         run: |
           for i in {1..10}; do
-            if pg_isready -h localhost -p 5432; then
+            if pg_isready -h localhost -p 5432 -U ${{ env.TEST_DB_USER }}; then
               echo "Postgres is ready!"
               break
             fi
@@ -58,18 +65,22 @@ jobs:
       - name: Run basic DB check
         run: |
           python - <<EOF
-          import sqlalchemy
-          from sqlalchemy import create_engine
-          import os
+import os
+from sqlalchemy import create_engine, text
 
-          url = f"postgresql://{os.getenv('TEST_DB_USER')}:{os.getenv('TEST_DB_PASSWORD')}@localhost:5432/{os.getenv('TEST_DB_NAME')}"
-          engine = create_engine(url)
-          with engine.connect() as conn:
-              print("DB OK:", conn.execute(sqlalchemy.text("SELECT 1")).scalar())
-          EOF
+db_user = os.getenv("DB_USER") or "testuser"
+db_password = os.getenv("DB_PASSWORD") or "testpassword"
+db_name = os.getenv("DB_NAME") or "testdb"
+
+url = f"postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
+engine = create_engine(url)
+
+with engine.connect() as conn:
+    print("DB OK:", conn.execute(text("SELECT 1")).scalar())
+EOF
 
       - name: Build Docker image
-        run: docker build -t iinquisit0r/userapi:latest app/.
+        run: docker build --platform linux/amd64 -t iinquisit0r/userapi:latest app/.
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
