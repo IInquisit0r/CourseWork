@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.TEST_DB_USER }}"
+          --health-cmd="pg_isready -U testuser"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -39,11 +39,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r app/requirements.txt
 
-      - name: Set DB env with fallback
+      - name: Set DB env with secrets fallback
         run: |
-          echo "DB_USER=${{ secrets.TEST_DB_USER || 'testuser' }}" >> $GITHUB_ENV
-          echo "DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD || 'testpassword' }}" >> $GITHUB_ENV
-          echo "DB_NAME=${{ secrets.TEST_DB_NAME || 'testdb' }}" >> $GITHUB_ENV
+          # Подставляем секреты если есть, иначе используем тестовые значения
+          DB_USER="${TEST_DB_USER:-testuser}"
+          DB_PASSWORD="${TEST_DB_PASSWORD:-testpassword}"
+          DB_NAME="${TEST_DB_NAME:-testdb}"
+          echo "DB_USER=$DB_USER" >> $GITHUB_ENV
+          echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
+          echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
 
       - name: Wait for Postgres
         run: |
@@ -62,9 +66,9 @@ jobs:
           import os
           from sqlalchemy import create_engine, text
           
-          db_user = os.getenv("DB_USER") or "testuser"
-          db_password = os.getenv("DB_PASSWORD") or "testpassword"
-          db_name = os.getenv("DB_NAME") or "testdb"
+          db_user = os.getenv("DB_USER")
+          db_password = os.getenv("DB_PASSWORD")
+          db_name = os.getenv("DB_NAME")
           
           url = f"postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
           engine = create_engine(url)
